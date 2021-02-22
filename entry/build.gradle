@@ -9,8 +9,8 @@ ohos {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar', '*.har'])
-    implementation 'com.squareup.okhttp3:okhttp:3.4.1'
     implementation 'io.reactivex:rxjava:1.1.6'
     testCompile'junit:junit:4.12'
+    implementation 'com.squareup.okhttp3:okhttp:3.4.1'
     implementation project(path: ':updownfile')
 }

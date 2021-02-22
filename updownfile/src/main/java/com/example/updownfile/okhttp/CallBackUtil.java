@@ -13,26 +13,51 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /**
- * Created by fighting on 2021/1/18.
+ * @param <T>
+ * @author lehuangd
+ * @version j
+ * @description:ghj created 2021/2/18 9:30
+ * @since 2021/2/18 9:30
  */
 public abstract class CallBackUtil<T> {
-    public static EventRunner runner = EventRunner.create(false);
-    public static MyEventHandler myHandler = new MyEventHandler(runner);
-    public void onProgress(float progress, long total ){
+    /**
+     * 定义runner
+     */
+    private static EventRunner RUNNER = EventRunner.create(false);
+    /**
+     * 定义handler
+     */
+    static MyEventHandler HANDLER = new MyEventHandler(RUNNER);
 
-    };
-    public void onError(final Call call, final Exception e){
+    /**
+     * @param progress p
+     * @param total    t
+     */
+    void onProgress(float progress, long total) {
+
+    }
+
+    /**
+     * @param call y
+     * @param e    i
+     */
+    void onError(final Call call, final Exception e) {
         Runnable task1 = new Runnable() {
             @Override
             public void run() {
-                onFailure(call,e);
+                onFailure(call, e);
             }
         };
-        myHandler.postTask(task1, 0, EventHandler.Priority.IMMEDIATE);
-        runner.run();
-        runner.stop();
-    };
-    public  void onSeccess(Call call, Response response){
+        HANDLER.postTask(task1, 0, EventHandler.Priority.IMMEDIATE);
+        RUNNER.run();
+        RUNNER.stop();
+    }
+
+    /**
+     * @param call     y
+     * @param response i
+     */
+    void onSeccess(Call call, Response response) {
         final T obj = onParseResponse(call, response);
         Runnable task2 = new Runnable() {
             @Override
@@ -40,37 +65,58 @@ public abstract class CallBackUtil<T> {
                 onResponse(obj);
             }
         };
-        myHandler.postTask(task2, 0, EventHandler.Priority.IMMEDIATE);
-        runner.run();
-        runner.stop();
-    };
+        HANDLER.postTask(task2, 0, EventHandler.Priority.IMMEDIATE);
+        RUNNER.run();
+        RUNNER.stop();
+    }
 
 
     /**
-     * 解析response，执行在子线程
+     * @param call     c
+     * @param response r
+     * @return d
      */
     public abstract T onParseResponse(Call call, Response response);
 
     /**
-     * 访问网络失败后被调用，执行在UI线程
+     * @param call c
+     * @param e    e
      */
-    public abstract void onFailure(Call call, Exception e);
+    abstract void onFailure(Call call, Exception e);
 
     /**
-     *
-     * 访问网络成功后被调用，执行在UI线程
+     * @param response r
      */
-    public abstract void onResponse(T response);
+    abstract void onResponse(T response);
 
-
-    public static abstract class CallBackDefault extends CallBackUtil<Response>{
+    /**
+     * 回调方法
+     *
+     * @return
+     */
+    public static class CallBackDefault extends CallBackUtil<Response> {
         @Override
         public Response onParseResponse(Call call, Response response) {
             return response;
         }
+
+        @Override
+        void onFailure(Call call, Exception e) {
+
+        }
+
+        @Override
+        void onResponse(Response response) {
+
+        }
     }
 
-    public static abstract class CallBackString extends CallBackUtil<String>{
+    /**
+     * 请求回调
+     *
+     * @return d
+     */
+    public static class CallBackString extends CallBackUtil<String> {
         @Override
         public String onParseResponse(Call call, Response response) {
             try {
@@ -79,6 +125,16 @@ public abstract class CallBackUtil<T> {
                 new RuntimeException("failure");
                 return "";
             }
+        }
+
+        @Override
+        void onFailure(Call call, Exception e) {
+
+        }
+
+        @Override
+        void onResponse(String response) {
+
         }
     }
 
@@ -144,21 +200,25 @@ public abstract class CallBackUtil<T> {
 
     /**
      * 下载文件时的回调类
+     *
+     * @return d
      */
-    public static abstract class CallBackFile extends CallBackUtil<File>{
-
-        private final String mDestFileDir;
-        private final String mdestFileName;
+    public static class CallBackFile extends CallBackUtil<File> {
+        /**
+         * DestFileDir
+         */
+        private final String destFileDir;
+        private final String destFileName;
 
         /**
-         *
-         * @param destFileDir:文件目录
-         * @param destFileName：文件名
+         * @param destFileDir1
+         * @param destFileName1
          */
-        public CallBackFile(String destFileDir, String destFileName){
-            mDestFileDir = destFileDir;
-            mdestFileName = destFileName;
+        public CallBackFile(String destFileDir1, String destFileName1) {
+            this.destFileDir = destFileDir1;
+            this.destFileName = destFileName1;
         }
+
         @Override
         public File onParseResponse(Call call, Response response) {
 
@@ -166,50 +226,60 @@ public abstract class CallBackUtil<T> {
             byte[] buf = new byte[1024];
             int len = 0;
             FileOutputStream fos = null;
-            try{
+            try {
                 is = response.body().byteStream();
                 final long total = response.body().contentLength();
 
                 long sum = 0;
 
-                File dir = new File(mDestFileDir);
-                if (!dir.exists()){
+                File dir = new File(destFileDir);
+                if (!dir.exists()) {
                     dir.mkdirs();
                 }
-                File file = new File(dir, mdestFileName);
+                File file = new File(dir, destFileName);
                 fos = new FileOutputStream(file);
-                while ((len = is.read(buf)) != -1){
+                while ((len = is.read(buf)) != -1) {
                     sum += len;
                     fos.write(buf, 0, len);
                     final long finalSum = sum;
-                    myHandler.postTask(new Runnable() {
+                    HANDLER.postTask(new Runnable() {
                         @Override
                         public void run() {
-                            onProgress(finalSum * 100.0f / total,total);
+                            onProgress(finalSum * 100.0f / total, total);
                         }
                     });
 
 
-            }
+                }
                 fos.flush();
 
                 return file;
 
             } catch (Exception e) {
                 e.printStackTrace();
-            } finally{
-                try{
+            } finally {
+                try {
                     response.body().close();
                     if (is != null) is.close();
-                } catch (IOException e){
+                } catch (IOException ignored) {
                 }
-                try{
+                try {
                     if (fos != null) fos.close();
-                } catch (IOException e){
+                } catch (IOException ignored) {
                 }
 
             }
             return null;
+        }
+
+        @Override
+        void onFailure(Call call, Exception e) {
+
+        }
+
+        @Override
+        void onResponse(File response) {
+
         }
     }
 

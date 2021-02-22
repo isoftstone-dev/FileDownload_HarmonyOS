@@ -43,6 +43,15 @@
         "label": "UpDownFile",
         "type": "page",
         "launchType": "standard"
+      },
+      {
+        "orientation": "unspecified",
+        "name": "com.example.updownfile.TaskDownAblity",
+        "icon": "$media:icon",
+        "description": "$string:taskdownablity_description",
+        "label": "entry",
+        "type": "page",
+        "launchType": "standard"
       }
     ],
     "reqPermissions": [

@@ -6,20 +6,29 @@ import ohos.agp.window.dialog.ToastDialog;
 import ohos.hiviewdfx.HiLog;
 import ohos.hiviewdfx.HiLogLabel;
 
+/**
+ * @author lehuangd
+ * @version y
+ * @description:ghj created 2021/2/18 9:30
+ * created 2021/2/18 10:20
+ * @since 2021/2/18 10:20
+ */
 public class LogUtil {
+
     /**
-     * 封装logo日志
-     * @param str
-     * @param format
+     * @param tag     t
+     * @param message m
      */
-    public static void setLog(String str,String format){
-        HiLogLabel label = new HiLogLabel(3, 0xD001100, str);
-        HiLog.info(label, format);
+    public static void setLog(String tag, String message) {
+        HiLogLabel label = new HiLogLabel(HiLog.LOG_APP, 0xFFFFF, tag);
+        HiLog.info(label, message);
     }
+
     /**
-     * Toast提示
+     * @param ability a
+     * @param msg     m
      */
-    public static void Toast(Ability ability,String msg){
+    public static void toast(Ability ability, String msg) {
         new ToastDialog(ability)
                 .setText(msg)
                 .setAlignment(LayoutAlignment.CENTER)

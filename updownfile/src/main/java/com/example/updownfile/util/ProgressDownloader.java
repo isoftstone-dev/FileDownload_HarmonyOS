@@ -1,8 +1,21 @@
 package com.example.updownfile.util;
 
-import okhttp3.*;
 
-import javax.net.ssl.*;
+import okhttp3.Call;
+import okhttp3.Interceptor;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.Protocol;
+import okhttp3.Callback;
+import okhttp3.ResponseBody;
+
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLSession;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,22 +25,63 @@ import java.nio.channels.FileChannel;
 import java.security.cert.CertificateException;
 import java.util.Collections;
 
+/**
+ * @author lehuangd
+ * @version y
+ * @description: ty
+ * created 2021/2/18 10:14
+ * @since 2021/2/18 10:14
+ */
 public class ProgressDownloader {
-
+    /**
+     * progressListener
+     */
     private ProgressResponseBody.ProgressListener progressListener;
+    /**
+     * url
+     */
     private String url;
+    /**
+     * client
+     */
     private OkHttpClient client;
+    /**
+     * destination
+     */
     private File destination;
+    /**
+     * call
+     */
     private Call call;
+    /**
+     * portion
+     */
+    private int portion;
 
-    public ProgressDownloader(String url, File destination, ProgressResponseBody.ProgressListener progressListener) {
+    /**
+     * 构造方法
+     *
+     * @param url              路径
+     * @param destination      e
+     * @param progressListener 回调进度
+     * @param portion          portion
+     */
+    public ProgressDownloader(String url, File destination, ProgressResponseBody.ProgressListener progressListener,
+                              int portion) {
         this.url = url;
         this.destination = destination;
         this.progressListener = progressListener;
+        this.portion = portion;
         //在下载、暂停后的继续下载中可复用同一个client对象
         client = getProgressClient();
     }
-    //每次下载需要新建新的Call对象
+
+    /**
+     * 每次下载需要新建新的Call对象
+     *
+     * @param startPoints s
+     * @return s
+     */
     private Call newCall(long startPoints) {
         Request request = new Request.Builder()
                 .url(url)
@@ -36,19 +90,21 @@ public class ProgressDownloader {
         return client.newCall(request);
     }
 
-    public OkHttpClient getProgressClient() {
+    /**
+     * @return d
+     */
+    private OkHttpClient getProgressClient() {
         // 拦截器，用上ProgressResponseBody
-        Interceptor interceptor = new Interceptor() {
-            @Override
-            public Response intercept(Chain chain) throws IOException {
-                Response originalResponse = chain.proceed(chain.request());
-                return originalResponse.newBuilder()
-                        .body(new ProgressResponseBody(originalResponse.body(), progressListener))
-                        .build();
-            }
+        Interceptor interceptor = chain -> {
+            Response originalResponse = chain.proceed(chain.request());
+            return originalResponse.newBuilder()
+                    .body(new ProgressResponseBody(originalResponse.body(), progressListener, portion))
+                    .build();
         };
-
-        return  getUnsafeOkHttpClient().newBuilder()
+        /**
+         * sd
+         */
+        return getUnsafeOkHttpClient().newBuilder()
                 .protocols(Collections.singletonList(Protocol.HTTP_1_1))
                 .addNetworkInterceptor(interceptor)
                 .build();
@@ -57,7 +113,8 @@ public class ProgressDownloader {
 
     /**
      * 指定开始下载的点
-     * @param startsPoint
+     *
+     * @param startsPoint d
      */
     public void download(final long startsPoint) {
         call = newCall(startsPoint);
@@ -70,8 +127,8 @@ public class ProgressDownloader {
             public void onResponse(Call call, Response response) {
                 try {
                     save(response, startsPoint);
-                }catch (Exception e){
-                  e.getMessage();
+                } catch (Exception e) {
+                    e.getMessage();
                 }
             }
         });
@@ -81,15 +138,16 @@ public class ProgressDownloader {
      * 暂停下载
      */
     public void pause() {
-        if(call!=null){
+        if (call != null) {
             call.cancel();
         }
     }
 
     /**
      * 保存资源
-     * @param response
-     * @param startsPoint
+     *
+     * @param response    r
+     * @param startsPoint s
      */
     private void save(Response response, long startsPoint) {
         ResponseBody body = response.body();
@@ -102,7 +160,8 @@ public class ProgressDownloader {
             //Chanel NIO中的用法，由于RandomAccessFile没有使用缓存策略，直接使用会使得下载速度变慢，亲测缓存下载3.3秒的文件，用普通的RandomAccessFile需要20多秒。
             channelOut = randomAccessFile.getChannel();
             // 内存映射，直接使用RandomAccessFile，是用其seek方法指定下载的起始位置，使用缓存下载，在这里指定下载位置。
-            MappedByteBuffer mappedBuffer = channelOut.map(FileChannel.MapMode.READ_WRITE, startsPoint, body.contentLength());
+            MappedByteBuffer mappedBuffer = channelOut.map(FileChannel.MapMode.READ_WRITE, startsPoint,
+                    body.contentLength());
             byte[] buffer = new byte[1024];
             int len;
             while ((len = in.read(buffer)) != -1) {
@@ -110,7 +169,7 @@ public class ProgressDownloader {
             }
         } catch (IOException e) {
             e.printStackTrace();
-        }finally {
+        } finally {
             try {
                 in.close();
                 if (channelOut != null) {
@@ -124,6 +183,10 @@ public class ProgressDownloader {
             }
         }
     }
+
+    /**
+     * @return d
+     */
     private static OkHttpClient getUnsafeOkHttpClient() {
         try {
             final TrustManager[] trustAllCerts = new TrustManager[]{
@@ -156,10 +219,9 @@ public class ProgressDownloader {
                 }
             });
 
-            OkHttpClient okHttpClient = builder.build();
-            return okHttpClient;
+            return builder.build();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
-    }
+}

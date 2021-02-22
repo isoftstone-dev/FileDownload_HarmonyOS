@@ -3,16 +3,19 @@ package com.example.updownfile.handler;
 import ohos.eventhandler.EventHandler;
 import ohos.eventhandler.EventRunner;
 import ohos.eventhandler.InnerEvent;
-import ohos.hiviewdfx.HiLog;
-import ohos.hiviewdfx.HiLogLabel;
 
+/**
+ * @author lehuangd
+ * created 2021/2/10 9:41
+ * @version v
+ * @since 2021/2/10 9:41
+ */
 public class MyEventHandler extends EventHandler {
+
     /**
-     * 日志
+     * @param runner r
+     * @throws IllegalArgumentException d
      */
-    private static final HiLogLabel label = new HiLogLabel(3, 0xD001100, "ThreadDemo");
-
-
     public MyEventHandler(EventRunner runner) throws IllegalArgumentException {
         super(runner);
     }
@@ -20,7 +23,7 @@ public class MyEventHandler extends EventHandler {
     /**
      * 1. 创建 EventHandler 的子类，在子类中重写实现方法 processEvent()来处理事件
      *
-     * @param event
+     * @param event e
      */
     @Override
     protected void processEvent(InnerEvent event) {
@@ -32,13 +35,6 @@ public class MyEventHandler extends EventHandler {
 
         int eventId = event.eventId;
         long param = event.param;
-        switch ((int) (eventId | param)) {
-            case 1:
-                HiLog.info(label, "eventId | param --->" + 1);
-                break;
-            default:
-                break;
-        }
     }
 
     /**

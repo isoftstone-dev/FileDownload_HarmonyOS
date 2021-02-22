@@ -47,6 +47,17 @@
         ohos:horizontal_center="true"
         />
     <Button
+        ohos:id="$+id:button6"
+        ohos:height="30vp"
+        ohos:width="350vp"
+        ohos:text_size="15fp"
+        ohos:background_element="$graphic:color_blue_element"
+        ohos:text="多文件下载（开启线程池）"
+        ohos:text_color="#ffffff"
+        ohos:top_margin="20vp"
+        ohos:horizontal_center="true"
+        />
+    <Button
         ohos:id="$+id:button4"
         ohos:height="30vp"
         ohos:width="350vp"
